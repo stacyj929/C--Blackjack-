@@ -1,0 +1,456 @@
+using System;
+
+using System.Collections.Generic;
+
+using System.Linq;
+
+using System.Text;
+
+using System.Threading.Tasks;
+
+using static System.Console;
+
+
+
+namespace Blackjack
+
+{
+
+    class Blackjack
+
+    {
+
+        static void Main()
+
+        {
+
+            int dealerCounter = 0; //Amount of non-null cards in DealerHand array, incremented in UpdateHand()
+
+            int userCounter = 0;
+
+            int dealerTotal = 0;
+
+            int userTotal = 0;
+
+
+
+            DisplayIntro();
+
+
+
+            //Instantiation of the card deck and a dummy ("joker") card.
+
+            //Deck is ordered 0-51, first ascending Ace to King, then by suit.
+
+            Card joker = new Card(0, false); //Null card value 0 to be used as a placeholder; not to be played
+
+            Card[] Deck = new Card[52];
+
+            for (int i = 0; i < 52; i++)
+
+            {
+
+                Deck[i] = new Card(i);
+
+                //Deck[i].Available = true; <!--Unnecessary for repeat runs, apparently -->
+
+                int suitNum = i % 4;
+
+                switch (suitNum) //  //Assigning suits to cards.
+
+                {
+
+                    case 0:
+
+                        Deck[i].Suit = " of Spades";
+
+                        break;
+
+                    case 1:
+
+                        Deck[i].Suit = " of Hearts";
+
+                        break;
+
+                    case 2:
+
+                        Deck[i].Suit = " of Clubs";
+
+                        break;
+
+                    case 3:
+
+                        Deck[i].Suit = " of Diamonds";
+
+                        break;
+
+                    default: Write("You have played a forbidden suit. The pit boss's thugs are on their way now."); break;
+
+                }
+
+                //Assigning values and face-names to cards.
+
+                if (i < 4) //Aces by default are 1
+
+                {
+
+                    Deck[i].CardValue = 1; //UpdateHand method uses CardValue=1 for further calculation
+
+                    Deck[i].Face = "Ace";
+
+
+
+                }
+
+                else if ((i > 3) && (i < 40)) // Cards value 2 to 10 have matching number and name
+
+                {
+
+                    Deck[i].CardValue = (i / 4) + 1;
+
+                    Deck[i].Face = Deck[i].CardValue.ToString();
+
+                }
+
+                else if (i > 39) // Face cards are worth 10 and get their own names
+
+                {
+
+                    Deck[i].CardValue = 10;
+
+                    if (i < 44) Deck[i].Face = "Jack";
+
+                    else if (i > 43 && i < 48) Deck[i].Face = "Queen";
+
+                    else Deck[i].Face = "King";
+
+                }
+
+            }
+
+            //Begin hand.
+
+            ReadKey();
+
+
+
+            //Dealer receives 2 cards; console user will be told the first one.
+
+            Card[] DealerHand = //Array has 11 elements (players can't draw more than 11 cards to reach 21)
+
+                { DrawAvailableRandom(Deck), joker, joker, joker, joker, joker, joker, joker, joker, joker, joker };
+
+            dealerTotal = UpdateHand(DealerHand, ref dealerCounter); //Adds card to hand, *Makes card unavailable*
+
+
+
+            DealerHand[dealerCounter] = DrawAvailableRandom(Deck);
+
+            dealerTotal = UpdateHand(DealerHand, ref dealerCounter); //End dealer's turn
+
+
+
+            //Cards are drawn for console user.
+
+            Card[] UserHand = //Array has 11 elements
+
+                { DrawAvailableRandom(Deck), joker, joker, joker, joker, joker, joker, joker, joker, joker, joker };
+
+            userTotal = UpdateHand(UserHand, ref userCounter);
+
+
+
+            bool choseHit = true;
+
+            do
+
+            {
+
+                UserHand[userCounter] = DrawAvailableRandom(Deck);
+
+                userTotal = UpdateHand(UserHand, ref userCounter);
+
+                choseHit = HitGameplay(UserHand, DealerHand[0], userTotal);
+
+            }
+
+            while (choseHit); //Now user gameplay has finished.
+
+
+
+            if (userTotal < 21)   //Calculate additional dealer hits if user hasn't yet won or lost.
+
+                
+
+            {
+
+                while (dealerTotal < 17) //Dealer must add cards until dealer total is at least 17
+
+                {
+
+                    DealerHand[dealerCounter] = DrawAvailableRandom(Deck);
+
+                    dealerTotal = UpdateHand(DealerHand, ref dealerCounter);
+
+                }
+
+            }
+
+
+
+            EndGameResults(UserHand, userTotal, DealerHand, dealerTotal);
+
+
+
+            WriteLine("\nPlay again? Enter 'y' to try your luck again: ");
+
+            if (char.Parse(ReadLine()) == 'y')
+
+            {
+
+                Console.Clear();
+
+                Main();
+
+            }
+
+            else Environment.Exit(0);
+
+        }
+
+      //End Main
+
+        public static Card DrawAvailableRandom(Card[] pileOfCards)
+
+        {        //Draws a random Card with property Available
+
+
+
+            Random shuffler = new Random();
+
+            Card aCard = new Card(0); //Initializing dummy value
+
+            do
+
+            {
+
+                aCard = pileOfCards[shuffler.Next(0, 51)]; //Giving card a Card object value from the array
+
+            }
+
+            while (aCard.Available == false); //Repeat until the card chosen is available/allowed
+
+
+
+            return aCard;
+
+        }
+
+
+
+        public static int UpdateHand ( Card[] playerHand, ref int playerCounter )
+
+        {        //Calculates hand's numerical value; updates hand size counter; removes card object from further play.
+
+            int newTotal = 0;
+
+            bool AceAsterisk = false;
+
+            for (int i = 0; i < playerCounter + 1; i++) //Sums CardValues; notes if there is an Ace
+
+            {
+
+                newTotal += playerHand[i].CardValue;
+
+                if (playerHand[i].CardValue == 1)
+
+                {
+
+                    AceAsterisk = true;
+
+                }
+
+            }
+
+            if (newTotal < 11 && AceAsterisk)
+
+
+
+            { newTotal += 10; } // E.g. a 5 and an Ace yields 5 + 1 + 10 = 16
+
+
+
+            playerHand[playerCounter].Available = false; //After use, a card is unavailable for the rest of the hand
+
+
+
+            playerCounter++; //Counter++ to fill next index value in (Player)Hand array
+
+
+
+            return newTotal;
+
+        }
+
+
+
+        public static bool HitGameplay(Card[] userCards, Card DealersCard, int currentScore)
+
+        {
+
+            Console.Clear();
+
+            WriteLine("Welcome to Blackjack : Gameplay\n");
+
+            Write("You have been dealt:  ");
+
+            foreach (Card realCard in userCards)
+
+            {
+
+                if (realCard.CardValue != 0)
+
+                {
+
+                    Write(realCard + "\t");
+
+                }
+
+            }
+
+            WriteLine("\n\nYour current total is: {0}\n", currentScore);
+
+            WriteLine("Dealer's first card: {0}\n", DealersCard);
+
+
+
+            if (currentScore < 21)
+
+            {
+
+                WriteLine("Would you like to Stand, or Hit for another card?");
+
+                Write("Enter 'stand' or 'hit': ");
+
+                if (ReadLine() == "hit")
+
+                    { return true; }
+
+            }
+
+            return false;
+
+        }
+
+
+
+        //Game summary
+
+        public static void EndGameResults(Card[] usersCards, int userScore, Card[] dealersCards, int dealerScore)
+
+        {
+
+            Console.Clear();
+
+            WriteLine("Welcome to Blackjack : Game Results");
+
+            WriteLine("***********************************************************************");
+
+            Write("\nYou were dealt:  ");
+
+
+
+            foreach (Card realCard in usersCards)
+
+            {
+
+                if (realCard.CardValue != 0)
+
+                {
+
+                    Write(realCard + "\t");
+
+                }
+
+            }
+
+            WriteLine("\nYour final total is: {0}", userScore);
+
+            WriteLine("***********************************************************************\n");
+
+            Write("The dealer had:  {0}\t", dealersCards[0]);
+
+            for (int i = 1; i < dealersCards.Length; i++)
+
+            {
+
+                if (dealersCards[i].CardValue != 0)
+
+                {
+
+                    Write(dealersCards[i] + "\t");
+
+                }
+
+            }
+
+            WriteLine("\n\nThe dealer finished with a score of: {0}", dealerScore);
+
+            WriteLine("***********************************************************************\n");
+
+            WriteLine("RESULT:");
+
+            if (userScore == 21)
+
+            {
+
+                if (usersCards[2].CardValue == 0) //Means Card 3 is null, so Cards 1 & 2 are 10 & Ace
+
+                { WriteLine("Blackjack! Woo"); }
+
+                else { WriteLine("21 - Automatic winner!"); }
+
+            }
+
+            else if (userScore > 21) { WriteLine("You lose! Your final score was {0}, which is over 21.", userScore); }
+
+            else if (userScore == dealerScore) { WriteLine("It's a draw..."); }
+
+            else if (userScore > dealerScore) { WriteLine("You win!"); }
+
+            else if (dealerScore > 21) { WriteLine("Dealer busted... You win!"); }
+
+            else { WriteLine("Dealer won this round :\\"); }
+
+            WriteLine("***********************************************************************");
+
+
+
+        }
+
+
+
+        public static void DisplayIntro()
+
+        {
+
+            WriteLine("Welcome to Blackjack.\n");
+
+            WriteLine("How this game works:");
+
+            WriteLine("- Each player is dealt two cards. You will see both of yours, and one of the dealer's.");
+
+            WriteLine("- Whoever ends up with cards adding up closest to 21, without going over, wins.");
+
+            WriteLine("- You can get another card (Hit) until you decide you are done (Stand).");
+
+            WriteLine("- Aces can be 1 or 11; Jack, Queen, and King act like 10s.");
+
+            WriteLine("\nPress any key to begin the hand.");
+
+        }
+
+    }
+
+}
+

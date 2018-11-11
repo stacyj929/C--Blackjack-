@@ -1,0 +1,193 @@
+/* Card.cs
+
+ * Each card object created in Blackjack.cs corresponds to a card drawn from the Deck during a Hand.
+
+ * Data members are suit (string), face (string), cardValue (int) and available (bool).   
+
+ * 3 class constructor overloads are used.
+
+ */
+
+using System;
+
+using System.Collections.Generic;
+
+using System.Linq;
+
+using System.Text;
+
+
+
+namespace Blackjack
+
+{
+
+    class Card
+
+    {
+
+        private int cardValue; //Integer 1-10, card's effective value
+
+        private string suit; //Hearts, etc
+
+        private string face; //Ace to King
+
+        private bool available = true;
+
+
+
+        public Card()
+
+        {
+
+        }
+
+
+
+        public Card(int cardNo)
+
+        {
+
+            cardValue = cardNo;
+
+        }
+
+
+
+        public Card(int cardNo, bool inPlay)
+
+        {
+
+            cardValue = cardNo;
+
+            available = inPlay;
+
+        }
+
+
+
+        public Card(int cardNo, string cardFace, string cardSuit, bool inPlay)
+
+        {
+
+            cardValue = cardNo;
+
+            face = cardFace;
+
+            suit = cardSuit;
+
+            available = inPlay;
+
+        }
+
+
+
+        public int CardValue
+
+        {
+
+            get
+
+            {
+
+                return cardValue;
+
+            }
+
+            set
+
+            {
+
+                cardValue = value;
+
+            }
+
+        }
+
+
+
+        public string Suit
+
+        {
+
+            get
+
+            {
+
+                return suit;
+
+
+
+            }
+
+            set
+
+            {
+
+                suit = value;
+
+            }
+
+        }
+
+
+
+        public string Face
+
+        {
+
+            get
+
+            {
+
+                return face;
+
+
+
+            }
+
+            set
+
+            {
+
+                face = value;
+
+            }
+
+        }
+
+
+
+        public bool Available
+
+        {
+
+            get
+
+            {
+
+                return available;
+
+            }
+
+            set
+
+            {
+
+                available = value;
+
+            }
+
+        }
+
+        public override string ToString()
+
+        {
+
+            return face + suit;
+
+        }
+
+    }
+
+}
